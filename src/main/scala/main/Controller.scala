@@ -6,44 +6,49 @@ import scalafx.scene.canvas.Canvas
 import scalafx.scene.control.ComboBox
 import scalafx.scene.layout.VBox
 import scalafxml.core.macros.sfxml
+import swarm.JSSP
 
 @sfxml
 class Controller(val canvas: Canvas,
                  val vboxMenu: VBox,
                  val comboBox: ComboBox[String]) {
 
-  val dirName = "/data"
-  val files: List[File] = listFiles(dirName)
+  val directoryName = "/data"
+  val files: List[File] = listFiles(directoryName)
   val fileNames: List[String] = files.map(file => file.getName).sorted
   var selectedFileName: String = initializeFileSelector(fileNames)
-  val jobs: Seq[Job] = readFile(dirName, selectedFileName)
+  val (jobs, machines): (Seq[Job], Seq[Machine]) = readFile(directoryName, selectedFileName)
+  val jssp: JSSP = new JSSP(jobs, machines)
 
-  def readFile(folder: String, fileName: String): Seq[Job] = {
-    val stream: InputStream = getClass.getResourceAsStream(folder + "/" + fileName)
+  def readFile(directoryName: String, fileName: String): (Seq[Job], Seq[Machine]) = {
+    val stream: InputStream = getClass.getResourceAsStream(directoryName + "/" + fileName)
     val lines: List[String] = scala.io.Source.fromInputStream(stream).getLines.toList
     val first :: rest = lines
 
     // Parse first line and set args
-    val numberOfJobs :: numberOfMachines :: Nil = first.split("\\s+").map(_.toInt).toList
+    val numberOfJobs :: numberOfMachines :: Nil = first.trim.split("\\s+").map(_.toInt).toList
 
     // Parse rest of file
     val jobs: Seq[Job] = for {
-      (line, i) <- rest.zipWithIndex if i < numberOfJobs
+      (line, jobId) <- rest.zipWithIndex if jobId < numberOfJobs
     } yield {
       val jobLine = line.trim.split("\\s+").map(_.toInt)
 
       // create jobs from job line
-      val operations = for (j <- jobLine.indices by 2) yield {
+      val operations: Seq[Operation] = for (j <- jobLine.indices by 2) yield {
         val machineId = jobLine(j)
-        val duration = jobLine(j + 1)
-        println(machineId + " " + duration)
-        Operation(machineId, duration)
+        val operationDuration = jobLine(j + 1)
+        Operation(machineId, jobId, operationDuration)
       }
 
-      Job(operations)
+      Job(jobId, operations)
     }
 
-    jobs
+    val machines: Seq[Machine] = for (_ <- 0 until numberOfMachines) yield {
+      Machine()
+    }
+
+    (jobs, machines)
   }
 
   def listFiles(directoryName: String): List[File] = {

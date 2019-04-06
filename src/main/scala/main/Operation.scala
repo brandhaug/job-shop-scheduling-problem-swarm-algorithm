@@ -1,5 +1,5 @@
 package main
 
-case class Operation(machineId: Int, duration: Int) {
+case class Operation(machineId: Int, jobId: Int, duration: Int) {
 
 }

@@ -1,5 +1,5 @@
 package main
 
-case class Job(operations: Seq[Operation]) {
+case class Job(id: Int, operations: Seq[Operation]) {
 
 }
