@@ -1,5 +1,5 @@
 package swarm.ba
 
-class Bee {
+trait Bee {
 
 }

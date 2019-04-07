@@ -48,7 +48,10 @@ public class JSSPGanttChart {
         for (int i = 0; i < machineLabels.size(); i++) {
             for (OperationTimeSlot operationTimeSlot : schedule) {
                 if (operationTimeSlot.operation().machineId() == machines.get(i).id()) {
-                    series.get(i).getData().add(new XYChart.Data(operationTimeSlot.start(), machineLabels.get(i), new GanttChart.ExtraData(operationTimeSlot.end() - operationTimeSlot.start(), colorClasses[operationTimeSlot.operation().jobId()])));
+                    series.get(i).getData().add(new XYChart.Data(operationTimeSlot.start(),
+                                                                 machineLabels.get(i),
+                                                                 new GanttChart.ExtraData(operationTimeSlot.operation().duration(),
+                                                                                          colorClasses[operationTimeSlot.operation().jobId()])));
                 }
             }
 
