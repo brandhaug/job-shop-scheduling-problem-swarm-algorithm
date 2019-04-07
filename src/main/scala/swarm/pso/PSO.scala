@@ -44,7 +44,7 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
       val schedule = decodePositionToSchedule(orderedPosition)
       val makeSpan = calculateMakeSpan(schedule)
       val localBestPosition = positionAndVelocity.map(_._2)
-      val particle = Particle(positionAndVelocity, makeSpan, localBestPosition, makeSpan, schedule, schedule)
+      val particle = Particle(positionAndVelocity, makeSpan, schedule, localBestPosition, makeSpan, schedule)
 
       if (globalBestParticle == null || particle.makeSpan < globalBestParticle.makeSpan) {
         globalBestParticle = particle
@@ -52,8 +52,6 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
 
       particle
     }
-
-    println("Global best make span: " + globalBestParticle.localBestMakeSpan)
 
     (particles, globalBestParticle.localBestSchedule, globalBestParticle.localBestMakeSpan)
   }
@@ -87,13 +85,12 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
       val newSchedule = decodePositionToSchedule(orderedNewPosition)
       val newMakeSpan = calculateMakeSpan(newSchedule)
 
-      // TODO: Merge to one if
       val newPosition = newPositionAndVelocity.map(_._2)
-      val localBestPosition = if (newMakeSpan < particle.localBestMakeSpan) newPosition else particle.localBestPosition
-      val localBestMakeSpan = if (newMakeSpan < particle.localBestMakeSpan) newMakeSpan else particle.localBestMakeSpan
-      val localBestSchedule = if (newMakeSpan < particle.localBestMakeSpan) newSchedule else particle.localBestSchedule
 
-      val newParticle = particle.copy(newPositionAndVelocity, newMakeSpan, localBestPosition, localBestMakeSpan, newSchedule, localBestSchedule)
+      val newParticle = {
+        if (newMakeSpan < particle.localBestMakeSpan) particle.copy(newPositionAndVelocity, newMakeSpan, newSchedule, newPosition, newMakeSpan, newSchedule)
+        else particle.copy(newPositionAndVelocity, newMakeSpan, newSchedule, particle.localBestPosition, particle.localBestMakeSpan, particle.localBestSchedule)
+      }
 
       if (newParticle.makeSpan < globalBestParticle.makeSpan) {
         globalBestParticle = newParticle
@@ -104,9 +101,6 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
 
     inertiaWeight = inertiaWeight * inertiaWeightDecay
     inertiaWeight = if (inertiaWeight < minInertiaWeight) minInertiaWeight else inertiaWeight
-
-    println("Inertia weight: " + inertiaWeight)
-    println("Global best make span: " + globalBestParticle.localBestMakeSpan)
 
     (newParticles, globalBestParticle.localBestSchedule, globalBestParticle.localBestMakeSpan)
   }
@@ -144,7 +138,6 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
 
     schedule
   }
-
 
   def calculateMakeSpan(schedule: Seq[OperationTimeSlot]): Int = {
     schedule.maxBy(_.end).end

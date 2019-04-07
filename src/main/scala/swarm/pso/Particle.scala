@@ -11,9 +11,9 @@ import scala.util.Random
   */
 case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
                     makeSpan: Int,
+                    schedule: Seq[OperationTimeSlot],
                     localBestPosition: Seq[Double],
                     localBestMakeSpan: Int,
-                    schedule: Seq[OperationTimeSlot],
                     localBestSchedule: Seq[OperationTimeSlot]) {
 
   def calculateNewPositionAndVelocity(positionAndVelocity: Seq[(Int, Double, Double)],
@@ -22,6 +22,8 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
                                       globalAccelerationConstant: Double,
                                       localBestPosition: Seq[Double],
                                       globalBestPosition: Seq[Double]): Seq[(Int, Double, Double)] = {
+
+    // TODO: Ugly
     val jobIds = positionAndVelocity.map(_._1)
     val position = positionAndVelocity.map(_._2)
     val velocity = positionAndVelocity.map(_._3)
@@ -39,12 +41,11 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
 
 
     // TODO: Find a better way to merge Seq(a), Seq(b), Seq(c) to Seq(a, b, c)
-    val newPositionAndVelocity = for ((jobId, i) <- jobIds.zipWithIndex) yield {
-      (jobId, newPosition(i), newVelocity(i))
+    val newPositionAndVelocity = for (i <- jobIds.indices) yield {
+      (jobIds(i), newPosition(i), newVelocity(i))
     }
 
     newPositionAndVelocity
-    //    (jobIds, newPosition, newVelocity)
   }
 
   def calculateNewPosition(position: Seq[Double], newVelocity: Seq[Double]): Seq[Double] = {
@@ -84,7 +85,7 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
 }
 
 object Particle {
-  // TODO: These are used in Particle and in JSSP, is this a good place to store them?
+  // TODO: These are used in Particle and in JSSP, is this a good place to store them, or should they be passed as parameter?
   val minVelocity: Double = -2.0
   val maxVelocity: Double = 2.0
 }

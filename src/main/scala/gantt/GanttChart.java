@@ -69,7 +69,6 @@ public class GanttChart<X, Y> extends XYChart<X, Y> {
 
     @Override
     protected void layoutPlotChildren() {
-
         for (int seriesIndex = 0; seriesIndex < getData().size(); seriesIndex++) {
 
             Series<X, Y> series = getData().get(seriesIndex);
