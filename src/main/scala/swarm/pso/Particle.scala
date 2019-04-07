@@ -1,5 +1,7 @@
 package swarm.pso
 
+import jssp.OperationTimeSlot
+
 import scala.util.Random
 
 /**
@@ -10,7 +12,9 @@ import scala.util.Random
 case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
                     makeSpan: Int,
                     localBestPosition: Seq[Double],
-                    localBestMakeSpan: Int) {
+                    localBestMakeSpan: Int,
+                    schedule: Seq[OperationTimeSlot],
+                    localBestSchedule: Seq[OperationTimeSlot]) {
 
   def calculateNewPositionAndVelocity(positionAndVelocity: Seq[(Int, Double, Double)],
                                       inertiaWeight: Double,

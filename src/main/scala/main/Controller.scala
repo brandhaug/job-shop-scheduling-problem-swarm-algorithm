@@ -1,54 +1,82 @@
 package main
 
-import java.io.{File, InputStream}
+import java.io.File
 
-import scalafx.scene.canvas.Canvas
-import scalafx.scene.control.ComboBox
-import scalafx.scene.layout.VBox
+import gantt.{GanttChart, JSSPGanttChart}
+import jssp.{JSSP, Job, Machine, OperationTimeSlot, ProblemFileReader}
+import scalafx.animation.AnimationTimer
+import scalafx.scene.control.{Button, ComboBox, Label}
+import scalafx.scene.layout.{Pane, VBox}
 import scalafxml.core.macros.sfxml
-import swarm.JSSP
+
+import scala.collection.JavaConverters._
 
 @sfxml
-class Controller(val canvas: Canvas,
-                 val vboxMenu: VBox,
-                 val comboBox: ComboBox[String]) {
+class Controller(val pane: Pane,
+                 val vBoxMenu: VBox,
+                 val comboBox: ComboBox[String],
+                 val generationLabel: Label,
+                 val makeSpanLabel: Label,
+                 val startButton: Button,
+                 val resetButton: Button) {
 
-  val directoryName = "/data"
+  val directoryName = "/problems"
   val files: List[File] = listFiles(directoryName)
   val fileNames: List[String] = files.map(file => file.getName).sorted
   var selectedFileName: String = initializeFileSelector(fileNames)
-  val (jobs, machines): (Seq[Job], Seq[Machine]) = readFile(directoryName, selectedFileName)
-  val jssp: JSSP = new JSSP(jobs, machines)
 
-  def readFile(directoryName: String, fileName: String): (Seq[Job], Seq[Machine]) = {
-    val stream: InputStream = getClass.getResourceAsStream(directoryName + "/" + fileName)
-    val lines: List[String] = scala.io.Source.fromInputStream(stream).getLines.toList
-    val first :: rest = lines
+  var animationTimer: AnimationTimer = _
 
-    // Parse first line and set args
-    val numberOfJobs :: numberOfMachines :: Nil = first.trim.split("\\s+").map(_.toInt).toList
+  // States
+  var paused = true
 
-    // Parse rest of file
-    val jobs: Seq[Job] = for {
-      (line, jobId) <- rest.zipWithIndex if jobId < numberOfJobs
-    } yield {
-      val jobLine = line.trim.split("\\s+").map(_.toInt)
 
-      // create jobs from job line
-      val operations: Seq[Operation] = for (j <- jobLine.indices by 2) yield {
-        val machineId = jobLine(j)
-        val operationDuration = jobLine(j + 1)
-        Operation(machineId, jobId, operationDuration)
+  initialize()
+
+  def initialize(): Unit = {
+    initializeGui()
+    val (jobs, machines): (Seq[Job], Seq[Machine]) = ProblemFileReader.readFile(directoryName, selectedFileName)
+    val jssp: JSSP = new JSSP(jobs, machines)
+
+    animationTimer = AnimationTimer(_ => {
+      if (!paused) {
+        val (generation, bestSchedule, bestMakeSpan): (Int, Seq[OperationTimeSlot], Int) = jssp.tick()
+        render(generation, bestSchedule, bestMakeSpan, machines)
       }
+    })
+    animationTimer.start()
+  }
 
-      Job(jobId, operations)
-    }
+  /**
+    * TODO: https://stackoverflow.com/questions/27975898/gantt-chart-from-scratch
+    */
+  def render(generation: Int, bestSchedule: Seq[OperationTimeSlot], bestMakeSpan: Int, machines: Seq[Machine]): Unit = {
+    generationLabel.setText("Generation: " + generation)
+    makeSpanLabel.setText("Make Span: " + bestMakeSpan)
+    initializeGanttChart(bestSchedule, machines)
+  }
 
-    val machines: Seq[Machine] = for (_ <- 0 until numberOfMachines) yield {
-      Machine()
-    }
+  def initializeGanttChart(bestSchedule: Seq[OperationTimeSlot], machines: Seq[Machine]): Unit = {
+    val jgc: JSSPGanttChart = new JSSPGanttChart(machines.asJava)
+    val chart: GanttChart[Number, String] = jgc.initializeGanttChart(bestSchedule.asJava)
+    chart.setPrefHeight(800)
+    chart.setPrefWidth(1000)
+    pane.children.clear()
+    pane.children.add(chart)
+  }
 
-    (jobs, machines)
+  def initializeGui(): Unit = {
+    startButton.setText("Start")
+    comboBox.setVisible(true)
+    generationLabel.setText("Generation: -")
+    makeSpanLabel.setText("Make span: -")
+  }
+
+  def initializeFileSelector(fileNames: List[String]): String = {
+    fileNames.foreach(fileName => comboBox += fileName)
+    val selectedFileName = fileNames.head
+    comboBox.getSelectionModel.select(fileNames.indexOf(selectedFileName))
+    selectedFileName
   }
 
   def listFiles(directoryName: String): List[File] = {
@@ -61,18 +89,31 @@ class Controller(val canvas: Canvas,
     }
   }
 
+  /**
+    * ScalaFX functions
+    */
   def selectFile(): Unit = {
     selectedFileName = comboBox.getValue.toString
+    reset()
   }
 
-  def initializeFileSelector(fileNames: List[String]): String = {
-    fileNames.foreach(fileName => comboBox += fileName)
-    val selectedFileName = fileNames.head
-    comboBox.getSelectionModel.select(fileNames.indexOf(selectedFileName))
-    selectedFileName
+  def toggleStart(): Unit = {
+    paused = !paused
+
+    if (paused) {
+      startButton.setText("Start")
+      comboBox.setVisible(true)
+    }
+    else {
+      startButton.setText("Pause")
+      comboBox.setVisible(false)
+    }
   }
 
   def reset(): Unit = {
-
+    paused = true
+    animationTimer.stop()
+    pane.children.clear()
+    initialize()
   }
 }

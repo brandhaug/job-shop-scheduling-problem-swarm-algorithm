@@ -1,0 +1,115 @@
+.anchor-pane {
+    -fx-background-color: #ffffff;
+}
+
+.v-box {
+    -fx-background-color: #f6f8ff;
+    -fx-spacing: 10;
+}
+
+.button {
+    -fx-pref-width: 100;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+    -fx-background-color: #eaeef1;
+    -fx-padding: 0.5em 1em;
+    -fx-border-color: #999999;
+    -fx-text-fill: #222222;
+    -fx-border-radius: 3px;
+}
+
+.button:hover {
+    -fx-background-color: #dadee1;
+    -fx-cursor: hand;
+}
+
+.label {
+}
+
+.combo-box {
+    -fx-padding: .35em 1em;
+}
+
+.h-box {
+}
+
+/*/ Gantt colors */
+.status-1 {
+    -fx-background-color: rgba(128, 0, 0, 0.7);
+}
+
+.status-2n {
+    -fx-background-color: rgba(0, 128, 0, 0.7);
+}
+
+.status-3 {
+    -fx-background-color: rgba(0, 0, 128, 0.7);
+}
+
+.status-4 {
+    -fx-background-color: rgba(0, 128, 128, 0.7);
+}
+
+.status-5 {
+    -fx-background-color: rgba(128, 128, 128, 0.7);
+}
+
+.status-6 {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+}
+
+.status-7 {
+    -fx-background-color: rgba(0, 0, 0, 0.7);
+}
+
+.status-8 {
+    -fx-background-color: rgba(128, 128, 0, 0.7);
+}
+
+.status-9 {
+    -fx-background-color: rgba(128, 0, 128, 0.7);
+}
+
+.status-10 {
+    -fx-background-color: rgba(64, 0, 128, 0.7);
+}
+
+.status-11 {
+    -fx-background-color: rgba(128, 0, 64, 0.7);
+}
+
+.status-12 {
+    -fx-background-color: rgba(128, 64, 0, 0.7);
+}
+
+.status-13 {
+    -fx-background-color: rgba(255, 0, 0, 0.7);
+}
+
+.status-14 {
+    -fx-background-color: rgba(0, 255, 0, 0.7);
+}
+
+.status-15 {
+    -fx-background-color: rgba(0, 0, 255, 0.7);
+}
+
+.status-16 {
+    -fx-background-color: rgba(255, 0, 255, 0.7);
+}
+
+.status-17 {
+    -fx-background-color: rgba(255, 255, 0, 0.7);
+}
+
+.status-18 {
+    -fx-background-color: rgba(0, 255, 255, 0.7);
+}
+
+.status-20 {
+    -fx-background-color: rgba(64, 64, 64, 0.7);
+}
+
+.status-21 {
+    -fx-background-color: rgba(180, 180, 180, 0.7);
+}

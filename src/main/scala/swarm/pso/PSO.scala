@@ -1,7 +1,6 @@
 package swarm.pso
 
-import main.{Job, Machine, Operation}
-import swarm.OperationTimeSlot
+import jssp.{Job, Machine, Operation, OperationTimeSlot}
 
 import scala.math.max
 import scala.util.Random
@@ -37,7 +36,7 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
 
   var globalBestParticle: Particle = _
 
-  def initializePopulation(): Seq[Particle] = {
+  def initializePopulation(): (Seq[Particle], Seq[OperationTimeSlot], Int) = {
     val particles: Seq[Particle] = for (_ <- 0 to populationSize) yield {
       val positionAndVelocity: Seq[(Int, Double, Double)] = initializePositionAndVelocity(jobs)
       val orderedPositionAndVelocity: Seq[(Int, Double, Double)] = positionAndVelocity.sortBy(_._2)
@@ -45,7 +44,7 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
       val schedule = decodePositionToSchedule(orderedPosition)
       val makeSpan = calculateMakeSpan(schedule)
       val localBestPosition = positionAndVelocity.map(_._2)
-      val particle = Particle(positionAndVelocity, makeSpan, localBestPosition, makeSpan)
+      val particle = Particle(positionAndVelocity, makeSpan, localBestPosition, makeSpan, schedule, schedule)
 
       if (globalBestParticle == null || particle.makeSpan < globalBestParticle.makeSpan) {
         globalBestParticle = particle
@@ -56,7 +55,7 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
 
     println("Global best make span: " + globalBestParticle.localBestMakeSpan)
 
-    particles
+    (particles, globalBestParticle.localBestSchedule, globalBestParticle.localBestMakeSpan)
   }
 
   def initializePositionAndVelocity(jobs: Seq[Job]): Seq[(Int, Double, Double)] = {
@@ -71,10 +70,11 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
       (job.id, operationWeight, velocity)
     }
 
+    // TODO: This is ugly, maybe separate the sequences before returning?
     positionAndVelocity
   }
 
-  def tick(particles: Seq[Particle]): Seq[Particle] = {
+  def tick(particles: Seq[Particle]): (Seq[Particle], Seq[OperationTimeSlot], Int) = {
     val newParticles: Seq[Particle] = for (particle: Particle <- particles) yield {
       val newPositionAndVelocity: Seq[(Int, Double, Double)] = particle.calculateNewPositionAndVelocity(particle.positionAndVelocity,
                                                                                                         inertiaWeight,
@@ -91,8 +91,9 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
       val newPosition = newPositionAndVelocity.map(_._2)
       val localBestPosition = if (newMakeSpan < particle.localBestMakeSpan) newPosition else particle.localBestPosition
       val localBestMakeSpan = if (newMakeSpan < particle.localBestMakeSpan) newMakeSpan else particle.localBestMakeSpan
+      val localBestSchedule = if (newMakeSpan < particle.localBestMakeSpan) newSchedule else particle.localBestSchedule
 
-      val newParticle = particle.copy(newPositionAndVelocity, newMakeSpan, localBestPosition, localBestMakeSpan)
+      val newParticle = particle.copy(newPositionAndVelocity, newMakeSpan, localBestPosition, localBestMakeSpan, newSchedule, localBestSchedule)
 
       if (newParticle.makeSpan < globalBestParticle.makeSpan) {
         globalBestParticle = newParticle
@@ -107,7 +108,7 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
     println("Inertia weight: " + inertiaWeight)
     println("Global best make span: " + globalBestParticle.localBestMakeSpan)
 
-    newParticles
+    (newParticles, globalBestParticle.localBestSchedule, globalBestParticle.localBestMakeSpan)
   }
 
   /**

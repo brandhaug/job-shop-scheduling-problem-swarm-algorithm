@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+
+<?import javafx.scene.layout.Pane?>
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/8.0.172-ea"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.Controller" styleClass="anchor-pane">
+    <Pane fx:id="pane" prefHeight="800.0" prefWidth="1000.0"/>
+    <VBox fx:id="vBoxMenu" alignment="CENTER" layoutX="1000.0" prefHeight="800.0" prefWidth="200.0" styleClass="v-box">
+        <ComboBox fx:id="comboBox" styleClass="combo-box" onAction="#selectFile"/>
+        <Label fx:id="generationLabel" styleClass="label" textAlignment="CENTER"/>
+        <Label fx:id="makeSpanLabel" styleClass="label" textAlignment="CENTER"/>
+        <Button fx:id="startButton" onAction="#toggleStart" styleClass="button"/>
+        <Button fx:id="resetButton" text="Reset" onAction="#reset" styleClass="button"/>
+    </VBox>
+</AnchorPane>
