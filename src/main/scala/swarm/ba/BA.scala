@@ -1,40 +1,76 @@
 package swarm.ba
 
-import jssp.{Job, Machine, Operation, OperationTimeSlot}
-
+import jssp.{Job, Machine, OperationTimeSlot}
+import swarm.SwarmUtils
 
 /**
   * Bees Algorithm
   */
 case class BA(jobs: Seq[Job], machines: Seq[Machine]) {
-  val numberOfEliteSites: Int = 0
-  val numberOfBestSites: Int = 0
+  val numberOfBestSites: Int = 5
+  val recruitedBeesForBestSites: Int = 10
+  val recruitedBeesForRemainingSites: Int = 3
 
-  val recruitedBeesForBestSites: Int = 0
-  val recruitedBeesForRemainingBestSites: Int = 0
-
-  val numberOfScouts: Int = 20
+  val numberOfScouts: Int = 50
   val numberOfFollowers: Int = 0
 
   val initialPopulationSize: Int = 0
   val stagnationCycleForSiteAbandonmentLimit: Int = 0
 
+  var globalBestBee: Bee = _
 
   def initializePopulation(): (Seq[Bee], Seq[OperationTimeSlot], Int) = {
-    for (_ <- 0 to numberOfScouts) yield {
-      val scoutBee: ScoutBee = ScoutBee()
-      initializeNeighborhood(scoutBee)
+    val scoutBees: Seq[Bee] = for (_ <- 0 to numberOfScouts) yield {
+      val positionAndVelocity: Seq[(Int, Double, Double)] = SwarmUtils.initializePositionAndVelocity(jobs)
+      val orderedPositionAndVelocity: Seq[(Int, Double, Double)] = positionAndVelocity.sortBy(_._2)
+      val orderedPosition = orderedPositionAndVelocity.map(_._1)
+      val schedule = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedPosition)
+      val makeSpan = SwarmUtils.calculateMakeSpan(schedule)
+      val scoutBee: Bee = Bee(positionAndVelocity, makeSpan, schedule)
+
+      if (globalBestBee == null || scoutBee.makeSpan < globalBestBee.makeSpan) {
+        globalBestBee = scoutBee
+      }
+
+      scoutBee
     }
 
-    val operation: Operation = Operation(0, 0, 0)
-    (Seq(ScoutBee()), Seq(OperationTimeSlot(operation, 0, 0)), 0)
+    (scoutBees, globalBestBee.schedule, globalBestBee.makeSpan)
   }
 
-  def initializeNeighborhood(scoutBee: ScoutBee): Unit = {
+  def initializeNeighborhood(scoutBee: Bee, neighborhoodSize: Int): Seq[Bee] = {
+    val followerBees: Seq[Bee] = for (_ <- 0 to neighborhoodSize) yield {
+      val positionAndVelocity: Seq[(Int, Double, Double)] = scoutBee.calculateNewPositionAndVelocity(scoutBee.positionAndVelocity)
+      val orderedPositionAndVelocity: Seq[(Int, Double, Double)] = positionAndVelocity.sortBy(_._2)
+      val orderedPosition = orderedPositionAndVelocity.map(_._1)
+      val schedule = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedPosition)
+      val makeSpan = SwarmUtils.calculateMakeSpan(schedule)
+      val followerBee: Bee = Bee(positionAndVelocity, makeSpan, schedule)
+      followerBee
+    }
 
+    followerBees
   }
 
-  def tick(bees: Seq[Bee]): (Seq[Bee], Seq[OperationTimeSlot], Int) = {
+  def tick(scoutBees: Seq[Bee]): (Seq[Bee], Seq[OperationTimeSlot], Int) = {
+    val orderedScoutBees: Seq[Bee] = scoutBees.sortBy(_.makeSpan)
+
+    val newScoutBees: Seq[Bee] = for ((scoutBee, i) <- orderedScoutBees.zipWithIndex) yield {
+      val neighborhoodSize = if (i < numberOfBestSites) recruitedBeesForBestSites else recruitedBeesForRemainingSites
+      val followerBees = initializeNeighborhood(scoutBee, neighborhoodSize)
+      val orderedFollowerBees = followerBees.sortBy(_.makeSpan)
+      val bestFollowerBee = orderedFollowerBees.head
+      val newScoutBee = if (bestFollowerBee.makeSpan < scoutBee.makeSpan) bestFollowerBee else scoutBee
+
+      if (newScoutBee.makeSpan < globalBestBee.makeSpan) {
+        globalBestBee = scoutBee
+      }
+
+      newScoutBee
+    }
+
+    (newScoutBees, globalBestBee.schedule, globalBestBee.makeSpan)
+
     // Initialize population of numberOfScouts Scout Bees
     // Evaluate fitness
 
@@ -55,13 +91,11 @@ case class BA(jobs: Seq[Job], machines: Seq[Machine]) {
 
 
     // for i = numberOfBestSites,...,numberOfScoutBees
-    val operation: Operation = Operation(0, 0, 0)
-    (Seq(ScoutBee()), Seq(OperationTimeSlot(operation, 0, 0)), 0)
   }
 
   /**
     * Recruited followers are randomly scattered within the neighborhoods enclosing the solutions visited by the scouts
-    * If any of the followers in a neighborhood lands on a solution of higher fitness than the solution visited by the scout,that followers becomes the new scout.
+    * If any of the followers in a neighborhood lands on a solution of higher fitness than the solution visited by the scout, that followers becomes the new scout.
     */
   def localSearch(): Unit = {
 

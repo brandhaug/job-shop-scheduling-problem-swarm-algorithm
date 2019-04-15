@@ -1,6 +1,6 @@
 package swarm.pso
 
-import jssp.OperationTimeSlot
+import jssp.{JSSP, OperationTimeSlot}
 
 import scala.util.Random
 
@@ -75,17 +75,11 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
         (personalAccelerationConstant * randomPersonalBestWeight * (personalBestPosition(i) - position(i))) +
         (globalAccelerationConstant * randomGlobalBestWeight * (globalBestPosition(i) - position(i)))
 
-      if (newOperationVelocity < Particle.minVelocity) Particle.minVelocity
-      else if (newOperationVelocity > Particle.maxVelocity) Particle.maxVelocity
+      if (newOperationVelocity < JSSP.minVelocity) JSSP.minVelocity
+      else if (newOperationVelocity > JSSP.maxVelocity) JSSP.maxVelocity
       else newOperationVelocity
     }
 
     newVelocity
   }
-}
-
-object Particle {
-  // TODO: These are used in Particle and in JSSP, is this a good place to store them, or should they be passed as parameter?
-  val minVelocity: Double = -2.0
-  val maxVelocity: Double = 2.0
 }

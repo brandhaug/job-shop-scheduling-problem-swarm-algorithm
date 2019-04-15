@@ -42,3 +42,10 @@ class JSSP(jobs: Seq[Job], machines: Seq[Machine], algorithmEnum: AlgorithmEnum)
     }
   }
 }
+
+object JSSP {
+  val minOperationWeight: Double = 0.0
+  val maxOperationWeight: Double = 2.0
+  val minVelocity: Double = -2.0
+  val maxVelocity: Double = 2.0
+}
