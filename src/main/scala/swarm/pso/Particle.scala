@@ -23,10 +23,9 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
                                       localBestPosition: Seq[Double],
                                       globalBestPosition: Seq[Double]): Seq[(Int, Double, Double)] = {
 
-    // TODO: Ugly
-    val jobIds = positionAndVelocity.map(_._1)
-    val position = positionAndVelocity.map(_._2)
-    val velocity = positionAndVelocity.map(_._3)
+    // TODO: you could just do this
+    val (jobIds, position, velocity): (Seq[Int], Seq[Double], Seq[Double]) = positionAndVelocity.unzip3
+
 
     val newVelocity: Seq[Double] = calculateNewVelocity(position,
                                                         velocity,
@@ -40,21 +39,15 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
                                                         newVelocity)
 
 
-    // TODO: Find a better way to merge Seq(a), Seq(b), Seq(c) to Seq(a, b, c)
-    val newPositionAndVelocity = for (i <- jobIds.indices) yield {
-      (jobIds(i), newPosition(i), newVelocity(i))
-    }
+    // TODO: Find a better way to merge Seq(a), Seq(b), Seq(c) to Seq(a, b, c) -- like this?
+    val newPositionAndVelocity = jobIds.indices.map(i => (jobIds(i), newPosition(i), newVelocity(i)))
 
     newPositionAndVelocity
   }
 
   def calculateNewPosition(position: Seq[Double], newVelocity: Seq[Double]): Seq[Double] = {
-    // TODO: Find function to add each element with same index of two arrays into a new array
-    val newPosition = for ((operationWeight, i) <- position.zipWithIndex) yield {
-      operationWeight + newVelocity(i)
-    }
-
-    newPosition
+    // TODO: Find function to add each element with same index of two arrays into a new array -- like this?
+    position.zip(newVelocity).map{case (p, v) => p + v }
   }
 
   def calculateNewVelocity(position: Seq[Double],
