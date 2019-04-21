@@ -1,6 +1,6 @@
 package swarm.pso
 
-import jssp.OperationTimeSlot
+import jssp.{JSSP, OperationTimeSlot}
 
 import scala.util.Random
 
@@ -54,8 +54,8 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
         (Particle.personalAccelerationConstant * randomPersonalBestWeight * (localBestPosition(i) - position(i))) +
         (Particle.globalAccelerationConstant * randomGlobalBestWeight * (globalBestPosition(i) - position(i)))
 
-      if (newOperationVelocity < Particle.minVelocity) Particle.minVelocity
-      else if (newOperationVelocity > Particle.maxVelocity) Particle.maxVelocity
+      if (newOperationVelocity < JSSP.minVelocity) JSSP.minVelocity
+      else if (newOperationVelocity > JSSP.maxVelocity) JSSP.maxVelocity
       else newOperationVelocity
     }
 
@@ -64,9 +64,6 @@ case class Particle(positionAndVelocity: Seq[(Int, Double, Double)],
 }
 
 object Particle {
-  val minVelocity: Double = -2.0
-  val maxVelocity: Double = 2.0
-
   /**
     * Acceleration constants (c1 + c2 = 4)
     * Low values allow particles to roam far from target regions before being tugged back

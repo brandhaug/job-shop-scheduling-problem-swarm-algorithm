@@ -1,93 +1,81 @@
 package swarm.ba
 
-import jssp.{Job, Machine, Operation, OperationTimeSlot}
-
+import jssp.{Job, Machine, OperationTimeSlot}
+import swarm.SwarmUtils
 
 /**
   * Bees Algorithm
   */
 case class BA(jobs: Seq[Job], machines: Seq[Machine]) {
-  val numberOfEliteSites: Int = 0
-  val numberOfBestSites: Int = 0
+  val numberOfScouts: Int = 50
 
-  val recruitedBeesForBestSites: Int = 0
-  val recruitedBeesForRemainingBestSites: Int = 0
+  val numberOfBestSites: Int = 5
+  val recruitedBeesForBestSites: Int = 10
+  val recruitedBeesForRemainingSites: Int = 3
 
-  val numberOfScouts: Int = 20
-  val numberOfFollowers: Int = 0
+  val maxTriesBeforeSiteAbandonment: Int = 5
 
-  val initialPopulationSize: Int = 0
-  val stagnationCycleForSiteAbandonmentLimit: Int = 0
-
+  var globalBestBee: Bee = _
 
   def initializePopulation(): (Seq[Bee], Seq[OperationTimeSlot], Int) = {
-    for (_ <- 0 to numberOfScouts) yield {
-      val scoutBee: ScoutBee = ScoutBee()
-      initializeNeighborhood(scoutBee)
+    val scoutBees: Seq[Bee] = for (_ <- 0 to numberOfScouts) yield {
+      val scoutBee = initializeScoutBee()
+
+      if (globalBestBee == null || scoutBee.makeSpan < globalBestBee.makeSpan) {
+        globalBestBee = scoutBee
+      }
+
+      scoutBee
     }
 
-    val operation: Operation = Operation(0, 0, 0)
-    (Seq(ScoutBee()), Seq(OperationTimeSlot(operation, 0, 0)), 0)
+    (scoutBees, globalBestBee.schedule, globalBestBee.makeSpan)
   }
 
-  def initializeNeighborhood(scoutBee: ScoutBee): Unit = {
-
+  def initializeScoutBee(): Bee = {
+    val positionAndVelocity: Seq[(Int, Double, Double)] = SwarmUtils.initializePositionAndVelocity(jobs)
+    val orderedPositionAndVelocity: Seq[(Int, Double, Double)] = positionAndVelocity.sortBy(_._2)
+    val orderedPosition = orderedPositionAndVelocity.map(_._1)
+    val schedule = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedPosition)
+    val makeSpan = SwarmUtils.calculateMakeSpan(schedule)
+    val scoutBee: Bee = Bee(positionAndVelocity, makeSpan, schedule, 0)
+    scoutBee
   }
 
-  def tick(bees: Seq[Bee]): (Seq[Bee], Seq[OperationTimeSlot], Int) = {
-    // Initialize population of numberOfScouts Scout Bees
-    // Evaluate fitness
+  def initializeNeighborhood(scoutBee: Bee, neighborhoodSize: Int): Seq[Bee] = {
+    val followerBees: Seq[Bee] = for (_ <- 0 to neighborhoodSize) yield {
+      val positionAndVelocity: Seq[(Int, Double, Double)] = scoutBee.calculateNewPositionAndVelocity(scoutBee.positionAndVelocity)
+      val orderedPositionAndVelocity: Seq[(Int, Double, Double)] = positionAndVelocity.sortBy(_._2)
+      val orderedPosition = orderedPositionAndVelocity.map(_._1)
+      val schedule = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedPosition)
+      val makeSpan = SwarmUtils.calculateMakeSpan(schedule)
+      val followerBee: Bee = Bee(positionAndVelocity, makeSpan, schedule, 0)
+      followerBee
+    }
 
-    // Neighborhood Search
-    // Select numberOfBestSites for neighborhood search
-    // Determine size of neighborhood
-    // Recruit bees for Elite Sites (more bees for best sites)
-    // Select fittest bee for each site
-
-    // Assign (numberOfScoutBees - numberOfBestSites) remaining bees to random search
-
-
-    // recruitment
-    // for numberOfBestSites
-    // localSearch (
-    // siteAbondonment // not in standard ba
-    // neighborhoodShrinking // not in standard ba
-
-
-    // for i = numberOfBestSites,...,numberOfScoutBees
-    val operation: Operation = Operation(0, 0, 0)
-    (Seq(ScoutBee()), Seq(OperationTimeSlot(operation, 0, 0)), 0)
+    followerBees
   }
 
-  /**
-    * Recruited followers are randomly scattered within the neighborhoods enclosing the solutions visited by the scouts
-    * If any of the followers in a neighborhood lands on a solution of higher fitness than the solution visited by the scout,that followers becomes the new scout.
-    */
-  def localSearch(): Unit = {
+  def tick(scoutBees: Seq[Bee]): (Seq[Bee], Seq[OperationTimeSlot], Int) = {
+    val orderedScoutBees: Seq[Bee] = scoutBees.sortBy(_.makeSpan)
 
+    val newScoutBees: Seq[Bee] = for ((scoutBee, i) <- orderedScoutBees.zipWithIndex) yield {
+      val neighborhoodSize = if (i < numberOfBestSites) recruitedBeesForBestSites else recruitedBeesForRemainingSites
+      val followerBees = initializeNeighborhood(scoutBee, neighborhoodSize)
+      val orderedFollowerBees = followerBees.sortBy(_.makeSpan)
+      val bestFollowerBee = orderedFollowerBees.head
+      val newScoutBee = {
+        if (bestFollowerBee.makeSpan < scoutBee.makeSpan) bestFollowerBee
+        else if (scoutBee.tries + 1 > maxTriesBeforeSiteAbandonment) initializeScoutBee()
+        else scoutBee.copy(tries = scoutBee.tries + 1)
+      }
+
+      if (newScoutBee.makeSpan < globalBestBee.makeSpan) {
+        globalBestBee = scoutBee
+      }
+
+      newScoutBee
+    }
+
+    (newScoutBees, globalBestBee.schedule, globalBestBee.makeSpan)
   }
-
-  /**
-    * If no follower finds a solution of higher fitness, the size of the neighborhood is shrunk
-    */
-  def shrinkNeighborhood(): Unit = {
-
-  }
-
-  /**
-    * If no improvement in fitness is recorded in a given neighborhood for a pre-set number of search cycles,
-    * the local maximum of fitness is considered found,the patch is abandoned and a new scout is randomly generated
-    */
-  def siteAbandonment(): Unit = {
-
-  }
-
-  /**
-    * Re-initialises the last (numberOfScouts - numberOfBestSites) neighborhoods with randomly generated solutions.
-    */
-  def globalSearch(): Unit = {
-
-  }
-
-  // Recruitment: scouts recruit followers to search further the neighborhoods of the most promising solutions
 }
