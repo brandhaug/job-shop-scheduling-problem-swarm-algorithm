@@ -6,7 +6,8 @@ import scala.util.Random
 
 case class Bee(positionAndVelocity: Seq[(Int, Double, Double)],
                makeSpan: Int,
-               schedule: Seq[OperationTimeSlot]) {
+               schedule: Seq[OperationTimeSlot],
+               tries: Int) {
 
   def calculateNewPositionAndVelocity(positionAndVelocity: Seq[(Int, Double, Double)]): Seq[(Int, Double, Double)] = {
 
