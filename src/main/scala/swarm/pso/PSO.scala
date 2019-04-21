@@ -30,8 +30,8 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
     val particles: Seq[Particle] = for (_ <- 0 to populationSize) yield {
       val positionAndVelocity: Seq[(Int, Double, Double)]        = SwarmUtils.initializePositionAndVelocity(jobs)
       val orderedPositionAndVelocity: Seq[(Int, Double, Double)] = positionAndVelocity.sortBy(_._2)
-      val orderedPosition                                        = orderedPositionAndVelocity.map(_._1)
-      val schedule                                               = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedPosition)
+      val orderedJobSequence                                     = orderedPositionAndVelocity.map(_._1)
+      val schedule                                               = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedJobSequence)
       val makeSpan                                               = SwarmUtils.calculateMakeSpan(schedule)
       val localBestPosition                                      = positionAndVelocity.map(_._2)
       val particle                                               = Particle(positionAndVelocity, makeSpan, schedule, localBestPosition, makeSpan, schedule)
@@ -50,8 +50,8 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
     val newParticles: Seq[Particle] = for (particle: Particle <- particles) yield {
       val newPositionAndVelocity: Seq[(Int, Double, Double)]        = particle.calculateNewPositionAndVelocity(inertiaWeight, globalBestParticle.localBestPosition)
       val orderedNewPositionAndVelocity: Seq[(Int, Double, Double)] = newPositionAndVelocity.sortBy(_._2)
-      val orderedNewPosition                                        = orderedNewPositionAndVelocity.map(_._1)
-      val newSchedule                                               = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedNewPosition)
+      val orderedJobSequence                                        = orderedNewPositionAndVelocity.map(_._1)
+      val newSchedule                                               = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedJobSequence)
       val newMakeSpan                                               = SwarmUtils.calculateMakeSpan(newSchedule)
 
       val newPosition = newPositionAndVelocity.map(_._2)

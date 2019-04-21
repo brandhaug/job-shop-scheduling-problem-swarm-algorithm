@@ -160,7 +160,6 @@ public class GanttChart<X, Y> extends XYChart<X, Y> {
 
 
     private Node createContainer(Series<X, Y> series, int seriesIndex, final Data<X, Y> item, int itemIndex) {
-
         Node container = item.getNode();
 
         if (container == null) {

@@ -1,22 +1,19 @@
 package jssp
 
 import jssp.AlgorithmEnum._
-import swarm.ba.{BA, Bee}
-import swarm.pso.{PSO, Particle}
+import swarm.ba.BA
+import swarm.pso.PSO
 
 /**
   * Job Shop Scheduling Problem
   */
-case class State(population: Either[Seq[Particle], Seq[Bee]], generation: Int = 0, bestSchedule: Seq[OperationTimeSlot], bestMakeSpan: Int)
-
 class JSSP(jobs: Seq[Job], machines: Seq[Machine], algorithmEnum: AlgorithmEnum) {
-
   val pso: PSO = PSO(jobs, machines)
   val ba: BA   = BA(jobs, machines)
 
   def tick(previousState: Option[State] = None): State = {
     algorithmEnum match {
-      case ParticleSwarmOptimization =>
+      case ParticleSwarmOptimization => {
         previousState match {
           case None =>
             // No previous state => initialize first state
@@ -27,8 +24,9 @@ class JSSP(jobs: Seq[Job], machines: Seq[Machine], algorithmEnum: AlgorithmEnum)
             val (particles, bestSchedule: Seq[OperationTimeSlot], bestMakeSpan: Int) = pso.tick(prevState.population.left.get)
             State(Left(particles), prevState.generation + 1, bestSchedule, bestMakeSpan)
         }
+      }
 
-      case BeesAlgorithm =>
+      case BeesAlgorithm => {
         previousState match {
           case None =>
             // No previous state => initialize first state
@@ -39,6 +37,7 @@ class JSSP(jobs: Seq[Job], machines: Seq[Machine], algorithmEnum: AlgorithmEnum)
             val (bees, bestSchedule: Seq[OperationTimeSlot], bestMakeSpan: Int) = ba.tick(prevState.population.right.get)
             State(Right(bees), prevState.generation + 1, bestSchedule, bestMakeSpan)
         }
+      }
     }
   }
 }

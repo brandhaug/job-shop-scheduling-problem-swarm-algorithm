@@ -7,15 +7,12 @@ import swarm.SwarmUtils
   * Bees Algorithm
   */
 case class BA(jobs: Seq[Job], machines: Seq[Machine]) {
-  val numberOfScouts: Int = 50
-
-  val numberOfBestSites: Int              = 5
+  val numberOfScouts: Int                 = 20
+  val numberOfBestSites: Int              = 3
   val recruitedBeesForBestSites: Int      = 10
-  val recruitedBeesForRemainingSites: Int = 3
-
-  val maxTriesBeforeSiteAbandonment: Int = 5
-
-  var globalBestBee: Bee = _
+  val recruitedBeesForRemainingSites: Int = 5
+  val maxTriesBeforeSiteAbandonment: Int  = 5
+  var globalBestBee: Bee                  = _
 
   def initializePopulation(): (Seq[Bee], Seq[OperationTimeSlot], Int) = {
     val scoutBees: Seq[Bee] = for (_ <- 0 to numberOfScouts) yield {
@@ -42,8 +39,10 @@ case class BA(jobs: Seq[Job], machines: Seq[Machine]) {
   }
 
   def initializeNeighborhood(scoutBee: Bee, neighborhoodSize: Int): Seq[Bee] = {
+    val globalBestPosition = globalBestBee.positionAndVelocity.map(_._2)
+
     val followerBees: Seq[Bee] = for (_ <- 0 to neighborhoodSize) yield {
-      val positionAndVelocity: Seq[(Int, Double, Double)]        = scoutBee.calculateNewPositionAndVelocity(scoutBee.positionAndVelocity)
+      val positionAndVelocity: Seq[(Int, Double, Double)]        = scoutBee.calculateNewPositionAndVelocity(scoutBee.positionAndVelocity, globalBestPosition)
       val orderedPositionAndVelocity: Seq[(Int, Double, Double)] = positionAndVelocity.sortBy(_._2)
       val orderedPosition                                        = orderedPositionAndVelocity.map(_._1)
       val schedule                                               = SwarmUtils.decodePositionToSchedule(jobs, machines, orderedPosition)
@@ -65,7 +64,7 @@ case class BA(jobs: Seq[Job], machines: Seq[Machine]) {
       val bestFollowerBee     = orderedFollowerBees.head
       val newScoutBee = {
         if (bestFollowerBee.makeSpan < scoutBee.makeSpan) bestFollowerBee
-        else if (scoutBee.tries + 1 > maxTriesBeforeSiteAbandonment) initializeScoutBee()
+        else if (scoutBee != globalBestBee && scoutBee.tries + 1 > maxTriesBeforeSiteAbandonment) initializeScoutBee()
         else scoutBee.copy(tries = scoutBee.tries + 1)
       }
 

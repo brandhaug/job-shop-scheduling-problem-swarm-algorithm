@@ -53,6 +53,11 @@ class Controller(val pane: Pane,
       _ => {
         if (!paused) {
           val currentState: State = jssp.tick(previousState)
+
+//          if (currentState.generation == 1 || currentState.generation % 10 == 0) {
+//            println(currentState.generation + " " + currentState.bestMakeSpan)
+//          }
+
           previousState = Some(currentState)
           render(currentState.generation, currentState.bestSchedule, currentState.bestMakeSpan, machines)
         }
@@ -124,9 +129,10 @@ class Controller(val pane: Pane,
   def toggleStart(): Unit = {
     paused = !paused
 
-    paused match {
-      case true  => startButton.setText("Start")
-      case false => startButton.setText("Pause")
+    if (paused) {
+      startButton.setText("Start")
+    } else {
+      startButton.setText("Pause")
     }
   }
 
