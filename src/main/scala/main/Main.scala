@@ -18,7 +18,6 @@ object Main extends JFXApp {
   val root = FXMLView(resource, NoDependencyResolver)
   root.getStylesheets.add(getClass.getResource("/styles.css").toExternalForm)
 
-
   stage = new PrimaryStage() {
     title = "FXML Demo"
     scene = new Scene(root)

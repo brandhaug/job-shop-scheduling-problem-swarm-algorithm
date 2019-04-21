@@ -59,4 +59,8 @@ object SwarmUtils {
   def calculateMakeSpan(schedule: Seq[OperationTimeSlot]): Int = {
     schedule.maxBy(_.end).end
   }
+
+  def calculateNewPosition(position: Seq[Double], newVelocity: Seq[Double]): Seq[Double] = {
+    position.zip(newVelocity).map { case (p, v) => p + v }
+  }
 }

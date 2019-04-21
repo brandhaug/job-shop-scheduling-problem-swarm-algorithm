@@ -20,3 +20,6 @@ Each particle has the following features:
 A population-based search algorithm which mimics the food foraging behaviour of honey bee colonies. In its basic version the algorithm performs a kind of neighbourhood search combined with global search, and can be used for both combinatorial optimization and continuous optimization.
 
 Bees algorithm and its application: https://www.youtube.com/watch?v=O9BYK-7hY0s
+
+#### Representation: Operation-Particle Position Sequence (OPPS)
+The mapping between the particle and the scheduling solution is established through connecting the operation sequence of all the jobs with the particle position sequence
