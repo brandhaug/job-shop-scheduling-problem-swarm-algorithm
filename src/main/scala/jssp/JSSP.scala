@@ -16,28 +16,23 @@ class JSSP(jobs: Seq[Job],
 
   val pso: PSO = PSO(jobs, machines)
 
-  // The idea is to take in the last state, and transition to the next from from there
   def tick(previousState: Option[State] = None): State = {
-    // TODO: Fix particles vars
-    // TODO Minimize the if else statements
-
     algorithmEnum match {
       case ParticleSwarmOptimization =>
-        // Prefer pattern matching to if-else branching
         previousState match {
           case None =>
             // No previous state => initialize first state
-            val (ps, bestSchedule, bestMakeSpan) = pso.initializePopulation()
-            State(particles = ps,
+            val (particles, bestSchedule, bestMakeSpan) = pso.initializePopulation()
+            State(particles = particles,
                   generation = 1,
                   bestSchedule = bestSchedule,
                   bestMakeSpan = bestMakeSpan)
 
-          case Some(prev) =>
+          case Some(prevState) =>
             val (particles,
                  bestSchedule: Seq[OperationTimeSlot],
-                 bestMakeSpan: Int) = pso.tick(prev.particles)
-            State(particles, prev.generation + 1, bestSchedule, bestMakeSpan)
+                 bestMakeSpan: Int) = pso.tick(prevState.particles)
+            State(particles, prevState.generation + 1, bestSchedule, bestMakeSpan)
         }
 
       case BeesAlgorithm =>
