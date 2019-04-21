@@ -4,7 +4,7 @@ import java.io.File
 
 import gantt.{GanttChart, JSSPGanttChart}
 import jssp.AlgorithmEnum.AlgorithmEnum
-import jssp.{AlgorithmEnum, JSSP, Job, Machine, OperationTimeSlot, ProblemFileReader}
+import jssp.{AlgorithmEnum, JSSP, Job, Machine, OperationTimeSlot, ProblemFileReader, State}
 import scalafx.animation.AnimationTimer
 import scalafx.scene.control.{Button, ComboBox, Label, RadioButton, ToggleGroup}
 import scalafx.scene.layout.{Pane, VBox}
@@ -23,10 +23,10 @@ class Controller(val pane: Pane,
                  val startButton: Button,
                  val resetButton: Button) {
 
-  val directoryName = "/problems"
-  val files: List[File] = listFiles(directoryName)
-  val fileNames: List[String] = files.map(file => file.getName).sorted
-  var selectedFileName: String = initializeFileSelector(fileNames)
+  val directoryName                  = "/problems"
+  val files           : List[File]   = listFiles(directoryName)
+  val fileNames       : List[String] = files.map(file => file.getName).sorted
+  var selectedFileName: String       = initializeFileSelector(fileNames)
 
   // Algorithm radio buttons
   val algorithmToggleGroup = new ToggleGroup()
@@ -35,12 +35,10 @@ class Controller(val pane: Pane,
   psoRadioButton.setSelected(true)
   var selectedAlgorithm: AlgorithmEnum = AlgorithmEnum.ParticleSwarmOptimization
 
-
   var animationTimer: AnimationTimer = _
 
   // States
   var paused = true
-
 
   initialize()
 
@@ -49,10 +47,15 @@ class Controller(val pane: Pane,
     val (jobs, machines): (Seq[Job], Seq[Machine]) = ProblemFileReader.readFile(directoryName, selectedFileName)
     val jssp: JSSP = new JSSP(jobs, machines, selectedAlgorithm)
 
+    var previousState: Option[State] = None
+
+    // Since this is just a hardcoded loop, you kind of need to store the previous state somewhere, but at least you're left with only a single var
+    // at the root of your call hierarchy, and not scattered around within the state transition logic
     animationTimer = AnimationTimer(_ => {
       if (!paused) {
-        val (generation, bestSchedule, bestMakeSpan): (Int, Seq[OperationTimeSlot], Int) = jssp.tick()
-        render(generation, bestSchedule, bestMakeSpan, machines)
+        val current = jssp.tick(previousState)
+        previousState = Some(current)
+        render(current.generation, current.bestSchedule, current.bestMakeSpan, machines)
       }
     })
     animationTimer.start()
@@ -112,7 +115,6 @@ class Controller(val pane: Pane,
 
     reset()
   }
-
 
   def selectFile(): Unit = {
     selectedFileName = comboBox.getValue.toString

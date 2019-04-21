@@ -34,6 +34,7 @@ case class PSO(jobs: Seq[Job], machines: Seq[Machine]) {
   val inertiaWeightDecay: Double = 0.995
   val minInertiaWeight = 0.4
 
+  // The same idea of taking in the previous state as an arg can be applied here as well -- eliminating the var's
   var globalBestParticle: Particle = _
 
   def initializePopulation(): (Seq[Particle], Seq[OperationTimeSlot], Int) = {

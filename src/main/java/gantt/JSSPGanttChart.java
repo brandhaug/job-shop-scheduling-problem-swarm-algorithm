@@ -1,15 +1,15 @@
 package gantt;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javafx.collections.FXCollections;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import jssp.Machine;
 import jssp.OperationTimeSlot;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class JSSPGanttChart {
     private List<String> machineLabels = new ArrayList<>();
